@@ -5,7 +5,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import db.DB;
 import db.DbException;
@@ -111,8 +114,39 @@ public class DepartmentDaoJDBC implements DepartmentDao {
 
 	@Override
 	public List<Department> findAll() {
-		// TODO Auto-generated method stub
-		return null;
+		PreparedStatement st = null;
+		ResultSet rs = null;
+		
+		try {
+			st = conn.prepareStatement(
+					"SELECT * FROM department");
+						
+			rs = st.executeQuery();			
+			
+			Map<Integer, Department> map = new HashMap<>();
+			
+			while (rs.next()) {
+				
+				int id = rs.getInt("Id");
+				
+				// Verifico se o departamento já esta no map
+				Department dep = map.get(id);
+				if (dep == null) {
+					dep = instantiateDepartment(rs);
+					map.put(id, dep);
+				}				
+			}
+			
+			// Retorna os valores do mapa como uma lista
+			return new ArrayList<>(map.values());
+		}
+		catch (SQLException e) {
+			throw new DbException(e.getMessage());
+		}
+		finally {
+			DB.closeStatement(st);
+			DB.closeResultSet(rs);
+		}
 	}	
 	
 	private Department instantiateDepartment(ResultSet rs) throws SQLException {
